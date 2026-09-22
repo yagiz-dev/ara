@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
         fptr = fopen(file, "r");
 
         if (fptr == NULL) {
-            printf("Unable to open file: %s\n", file);
+            fprintf(stderr, "Unable to open file: %s\n", file);
             exit(1);
         }
     } else {
@@ -101,7 +101,7 @@ void parse_arguments(int argc, char *argv[], struct Options *options)
 
     if (argc < 2)
     {
-        printf("You must provide a search query and a source file.\nExample: ara \"error\" server.log");
+        fprintf(stderr, "You must provide a search query.\n");
         exit(1);
     }
 
@@ -126,13 +126,13 @@ void parse_arguments(int argc, char *argv[], struct Options *options)
                 break;
 
             default:
-                printf("Unknown option: %c\n", opt);
+                fprintf(stderr, "Unknown option: %c\n", opt);
                 exit(1);
         }
     }
 
     if (argc - optind < 1) {
-        printf("You must provide a search query.\n");
+        fprintf(stderr, "You must provide a search query.\n");
         exit(1);
     }
 }
