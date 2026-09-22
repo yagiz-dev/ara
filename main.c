@@ -12,7 +12,7 @@ struct Options {
     int max_lines;
 };
 
-void read_file(char search[], char file[], const struct Options *options);
+void process_stream(char search[], FILE *fptr, const struct Options *options);
 void parse_arguments(int argc, char *argv[], struct Options *options);
 void print_line(char content[], int line_number, const struct Options *options);
 void lowercase(char string[]);
@@ -20,28 +20,35 @@ void lowercase(char string[]);
 int main(int argc, char *argv[])
 {
     struct Options options;
+    FILE *fptr;
 
     parse_arguments(argc, argv, &options);
 
     char *search = argv[optind];
     char *file = argv[optind + 1];
 
-    read_file(search, file, &options);
+    if (file != NULL) {
+        fptr = fopen(file, "r");
+
+        if (fptr == NULL) {
+            printf("Unable to open file: %s\n", file);
+            exit(1);
+        }
+    } else {
+        fptr = stdin;
+    }
+
+    process_stream(search, fptr, &options);
+
+    if (fptr != stdin) {
+        fclose(fptr);
+    }
 
     return 0;
 }
 
-void read_file(char search[], char file[], const struct Options *options)
+void process_stream(char search[], FILE *fptr, const struct Options *options)
 {
-    FILE *fptr;
-
-    fptr = fopen(file, "r");
-
-    if (fptr == NULL) {
-        printf("Unable to open file: %s\n", file);
-        exit(1);
-    }
-
     char original_line[4096];
     char modified_line[4096];
     char *line;
@@ -81,8 +88,6 @@ void read_file(char search[], char file[], const struct Options *options)
             break;
         }
     }
-
-    fclose(fptr);
 }
 
 void parse_arguments(int argc, char *argv[], struct Options *options)
@@ -94,7 +99,7 @@ void parse_arguments(int argc, char *argv[], struct Options *options)
     options->show_line_numbers = false;
     options->max_lines = -1;
 
-    if (argc < 3)
+    if (argc < 2)
     {
         printf("You must provide a search query and a source file.\nExample: ara \"error\" server.log");
         exit(1);
@@ -126,8 +131,8 @@ void parse_arguments(int argc, char *argv[], struct Options *options)
         }
     }
 
-    if (argc - optind < 2) {
-        printf("You must provide a search query and a source file. Example: ara \"error\" server.log\n");
+    if (argc - optind < 1) {
+        printf("You must provide a search query.\n");
         exit(1);
     }
 }
