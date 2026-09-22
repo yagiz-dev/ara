@@ -5,18 +5,22 @@
 #include <stdbool.h>
 #include <ctype.h>
 
-bool ignore_case = false;
-bool show_line_numbers = false;
-bool invert_matches = false;
-int  max_lines = 0;
+struct Options {
+    bool ignore_case;
+    bool show_line_numbers;
+    bool invert_matches;
+    int max_lines;
+};
 
-void parse_arguments(int argc, char *argv[]);
+void parse_arguments(int argc, char *argv[], struct Options *options);
+void print_line(char content[], int line_number, struct Options *options);
 void lowercase(char string[]);
-void print_line(char content[], int line_number);
 
 int main(int argc, char *argv[])
 {
-    parse_arguments(argc, argv);
+    struct Options options;
+
+    parse_arguments(argc, argv, &options);
 
     FILE *fptr;
 
@@ -37,7 +41,7 @@ int main(int argc, char *argv[])
     int line_number = 0;
     int matched_line_count = 0;
 
-    if (ignore_case == true) {
+    if (options.ignore_case == true) {
         lowercase(search);
     }    
 
@@ -46,7 +50,7 @@ int main(int argc, char *argv[])
 
         line = original_line;
 
-        if (ignore_case) {
+        if (options.ignore_case) {
             strcpy(modified_line, original_line);
             lowercase(modified_line);
 
@@ -54,17 +58,17 @@ int main(int argc, char *argv[])
         }
 
         bool match = strstr(line, search) != NULL;
-        if (invert_matches) {
+        if (options.invert_matches) {
             match = !match;
         }
 
         if (match) {
-            print_line(original_line, line_number);
+            print_line(original_line, line_number, &options);
 
             matched_line_count++;
         }
 
-        if (matched_line_count > 0 && matched_line_count == max_lines) {
+        if (matched_line_count > 0 && matched_line_count == options.max_lines) {
             break;
         }
     }
@@ -81,9 +85,14 @@ void lowercase(char *string)
     }
 }
 
-void parse_arguments(int argc, char *argv[])
+void parse_arguments(int argc, char *argv[], struct Options *options)
 {
     int opt;
+
+    options->ignore_case = false;
+    options->invert_matches = false;
+    options->show_line_numbers = false;
+    options->max_lines = 0;
 
     if (argc < 3)
     {
@@ -96,19 +105,19 @@ void parse_arguments(int argc, char *argv[])
         switch (opt)
         {
             case 'i':
-                ignore_case = true;
+                options->ignore_case = true;
                 break;
 
             case 'n':
-                show_line_numbers = true;
+                options->show_line_numbers = true;
                 break;
 
             case 'v':
-                invert_matches = true;
+                options->invert_matches = true;
                 break;
 
             case 'm':
-                max_lines = atoi(optarg);
+                options->max_lines = atoi(optarg);
                 break;
 
             default:
@@ -123,9 +132,9 @@ void parse_arguments(int argc, char *argv[])
     }
 }
 
-void print_line(char *content, int line_number)
+void print_line(char *content, int line_number, struct Options *options)
 {
-    if (show_line_numbers) {
+    if (options->show_line_numbers) {
         printf("%d: %s", line_number, content);
     } else {
         printf("%s", content);
