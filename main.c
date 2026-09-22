@@ -12,8 +12,9 @@ struct Options {
     int max_lines;
 };
 
+void read_file(char search[], char file[], const struct Options *options);
 void parse_arguments(int argc, char *argv[], struct Options *options);
-void print_line(char content[], int line_number, struct Options *options);
+void print_line(char content[], int line_number, const struct Options *options);
 void lowercase(char string[]);
 
 int main(int argc, char *argv[])
@@ -22,16 +23,23 @@ int main(int argc, char *argv[])
 
     parse_arguments(argc, argv, &options);
 
-    FILE *fptr;
-
     char *search = argv[optind];
     char *file = argv[optind + 1];
+
+    read_file(search, file, &options);
+
+    return 0;
+}
+
+void read_file(char search[], char file[], const struct Options *options)
+{
+    FILE *fptr;
 
     fptr = fopen(file, "r");
 
     if (fptr == NULL) {
-        printf("Unable to open file: %s", file);
-        return 1;
+        printf("Unable to open file: %s\n", file);
+        exit(1);
     }
 
     char original_line[4096];
@@ -41,7 +49,7 @@ int main(int argc, char *argv[])
     int line_number = 0;
     int matched_line_count = 0;
 
-    if (options.ignore_case == true) {
+    if (options->ignore_case == true) {
         lowercase(search);
     }    
 
@@ -50,7 +58,7 @@ int main(int argc, char *argv[])
 
         line = original_line;
 
-        if (options.ignore_case) {
+        if (options->ignore_case) {
             strcpy(modified_line, original_line);
             lowercase(modified_line);
 
@@ -58,31 +66,23 @@ int main(int argc, char *argv[])
         }
 
         bool match = strstr(line, search) != NULL;
-        if (options.invert_matches) {
+        if (options->invert_matches) {
             match = !match;
         }
 
         if (match) {
-            print_line(original_line, line_number, &options);
+            print_line(original_line, line_number, options);
 
             matched_line_count++;
         }
 
-        if (matched_line_count > 0 && matched_line_count == options.max_lines) {
+        if (options->max_lines >= 0 &&
+            matched_line_count >= options->max_lines) {
             break;
         }
     }
 
     fclose(fptr);
-
-    return 0;
-}
-
-void lowercase(char *string)
-{
-    for (int i = 0; string[i]; i++) {
-        string[i] = tolower(string[i]);
-    }
 }
 
 void parse_arguments(int argc, char *argv[], struct Options *options)
@@ -92,7 +92,7 @@ void parse_arguments(int argc, char *argv[], struct Options *options)
     options->ignore_case = false;
     options->invert_matches = false;
     options->show_line_numbers = false;
-    options->max_lines = 0;
+    options->max_lines = -1;
 
     if (argc < 3)
     {
@@ -132,11 +132,18 @@ void parse_arguments(int argc, char *argv[], struct Options *options)
     }
 }
 
-void print_line(char *content, int line_number, struct Options *options)
+void print_line(char *content, int line_number, const struct Options *options)
 {
     if (options->show_line_numbers) {
         printf("%d: %s", line_number, content);
     } else {
         printf("%s", content);
+    }
+}
+
+void lowercase(char *string)
+{
+    for (int i = 0; string[i]; i++) {
+        string[i] = tolower(string[i]);
     }
 }
