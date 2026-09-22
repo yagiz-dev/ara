@@ -30,8 +30,9 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    char og_line_content[4096] = "";
-    char line_content[4096] = "";
+    char original_line[4096];
+    char modified_line[4096];
+    char *line;
 
     int line_number = 0;
     int matched_line_count = 0;
@@ -40,22 +41,25 @@ int main(int argc, char *argv[])
         lowercase(search);
     }    
 
-    while (fgets(og_line_content, 4096, fptr)) {
+    while (fgets(original_line, 4096, fptr)) {
         line_number++;
 
-        strcpy(line_content, og_line_content); // @todo: keep a copy only when we manipulate file content
+        line = original_line;
 
-        if (ignore_case == true) {
-            lowercase(line_content);
+        if (ignore_case) {
+            strcpy(modified_line, original_line);
+            lowercase(modified_line);
+
+            line = modified_line;
         }
 
-        bool match = strstr(line_content, search) != NULL;
+        bool match = strstr(line, search) != NULL;
         if (invert_matches) {
             match = !match;
         }
 
         if (match) {
-            print_line(og_line_content, line_number);
+            print_line(original_line, line_number);
 
             matched_line_count++;
         }
